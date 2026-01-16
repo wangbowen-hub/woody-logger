@@ -1,0 +1,15 @@
+[project]
+name = "woody-logger"
+version = "0.1.0"
+description = "按天轮转、控制台输出的文件日志记录器"
+requires-python = ">=3.11"
+dependencies = []
+authors = [
+    { name = "woody", email = "wangbowen20000822@gmail.com" }
+]
+license = { text = "MIT" }
+keywords = ["logging", "logger"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
