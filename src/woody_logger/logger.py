@@ -8,6 +8,7 @@
 """
 
 import logging
+import re
 from logging.handlers import TimedRotatingFileHandler
 import os
 from datetime import datetime, timezone, timedelta
@@ -15,7 +16,44 @@ from datetime import datetime, timezone, timedelta
 
 # 定义中国时区 (UTC+8)
 CHINA_TZ = timezone(timedelta(hours=8))
-#
+
+# 默认健康检查路径模式
+DEFAULT_HEALTH_CHECK_PATTERNS = [
+    r"/api/health/?$",
+    r"/health/?$",
+]
+
+
+class HealthCheckFilter(logging.Filter):
+    """过滤健康检查请求的日志过滤器"""
+
+    def __init__(self, patterns: list[str] | None = None):
+        """
+        初始化健康检查过滤器。
+
+        Args:
+            patterns: 要过滤的路径正则表达式列表，默认使用常见健康检查路径。
+        """
+        super().__init__()
+        if patterns is None:
+            patterns = DEFAULT_HEALTH_CHECK_PATTERNS
+        self._patterns = [re.compile(p, re.IGNORECASE) for p in patterns]
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """
+        过滤日志记录。
+
+        Args:
+            record: 日志记录对象。
+
+        Returns:
+            True 表示保留该日志，False 表示过滤掉。
+        """
+        message = record.getMessage()
+        for pattern in self._patterns:
+            if pattern.search(message):
+                return False
+        return True
 
 
 class ChinaTimeFormatter(logging.Formatter):
@@ -31,13 +69,20 @@ class ChinaTimeFormatter(logging.Formatter):
         return s
 
 
-def get_logger(name: str = "app", log_dir: str = "logs") -> logging.Logger:
+def get_logger(
+    name: str = "app",
+    log_dir: str = "logs",
+    filter_health_check: bool = True,
+    health_check_patterns: list[str] | None = None,
+) -> logging.Logger:
     """
     获取按天轮转的文件日志记录器。
 
     Args:
         name (str): 日志记录器名称，默认为 "app"。
         log_dir (str): 日志文件存放目录，默认为 "logs"。
+        filter_health_check (bool): 是否过滤健康检查日志，默认为 False。
+        health_check_patterns (list[str] | None): 自定义健康检查路径正则表达式列表。
 
     Returns:
         logging.Logger: 配置好的日志记录器实例。
@@ -65,6 +110,11 @@ def get_logger(name: str = "app", log_dir: str = "logs") -> logging.Logger:
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
+
+        # 添加健康检查过滤器
+        if filter_health_check:
+            health_filter = HealthCheckFilter(patterns=health_check_patterns)
+            logger.addFilter(health_filter)
 
     return logger
 
