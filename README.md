@@ -1,0 +1,1 @@
+uv add git+https://github.com/wangbowen-hub/woody-logger.git

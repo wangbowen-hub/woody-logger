@@ -10,6 +10,24 @@
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import os
+from datetime import datetime, timezone, timedelta
+
+
+# 定义中国时区 (UTC+8)
+CHINA_TZ = timezone(timedelta(hours=8))
+
+
+class ChinaTimeFormatter(logging.Formatter):
+    """使用中国时区的日志格式化器"""
+
+    def formatTime(self, record, datefmt=None):
+        ct = datetime.fromtimestamp(record.created, tz=CHINA_TZ)
+        if datefmt:
+            s = ct.strftime(datefmt)
+        else:
+            s = ct.strftime("%Y-%m-%d %H:%M:%S")
+            s = f"{s},{int(record.msecs):03d}"
+        return s
 
 
 def get_logger(name: str = "app", log_dir: str = "logs") -> logging.Logger:
@@ -29,7 +47,7 @@ def get_logger(name: str = "app", log_dir: str = "logs") -> logging.Logger:
     logger.setLevel(logging.DEBUG)
 
     if not logger.handlers:
-        formatter = logging.Formatter(
+        formatter = ChinaTimeFormatter(
             "%(asctime)s - %(levelname)s - %(funcName)s - %(message)s"
         )
 
