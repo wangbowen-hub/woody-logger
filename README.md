@@ -1,1 +1,1 @@
-uv add git+https://github.com/wangbowen-hub/woody-logger.git
+uv add git+https://github.com/wangbowen-hub/woody-logger.git@v1.1.0
